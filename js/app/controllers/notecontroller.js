@@ -7,7 +7,7 @@
 
 app.controller('NoteController', function($routeParams, $scope, NotesModel,
                                           SaveQueue, note, debounce,
-                                          $document) {
+                                          $document, $timeout) {
     'use strict';
 
     NotesModel.updateIfExists(note);
@@ -55,6 +55,31 @@ app.controller('NoteController', function($routeParams, $scope, NotesModel,
         note.error = false;
         SaveQueue.addManual(note);
     };
+
+    $scope.editCategory = false;
+    $scope.showEditCategory = function() {
+        $scope.editCategory = true;
+        $timeout(function() {
+            $('#category').focus();
+            if(!$scope.note.category) {
+                $('#category').autocomplete('search', '');
+            }
+        });
+    };
+    $scope.closeCategory = function() {
+        $scope.editCategory = false;
+        if($scope.note.unsaved) {
+            $scope.autoSave($scope.note);
+        }
+    };
+
+    $('#category').autocomplete({
+            source: NotesModel.getCategories(NotesModel.getAll(), 0, false),
+            minLength: 0,
+            position: { my: 'left bottom', at: 'left top' },
+    });
+    // fix space between input and confirm-button
+    $('form.category .icon-confirm').insertAfter('#category');
 
     $document.unbind('keypress.notes.save');
     $document.bind('keypress.notes.save', function(event) {
